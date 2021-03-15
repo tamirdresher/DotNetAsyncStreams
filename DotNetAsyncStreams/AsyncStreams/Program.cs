@@ -17,15 +17,15 @@ namespace AsyncStreams
             }
 
             #region LINQ
-            //var grps = from r in records
-            //    where r.Length > 0
-            //    group r by r[0] into g
-            //    select g;
+            var grps = from r in records
+                       where r.Length > 0
+                       group r by r[0] into g
+                       select g;
 
-            //foreach (var grp in grps)
-            //{
-            //    Console.WriteLine($"Key: {grp.Key} Count: {grp.Count()}");
-            //}
+            await foreach (var grp in grps)
+            {
+                Console.WriteLine($"Key: {grp.Key} Count: {await grp.CountAsync()}");
+            }
             #endregion
         }
 
