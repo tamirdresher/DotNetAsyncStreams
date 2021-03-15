@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AsyncStreams
@@ -10,8 +12,10 @@ namespace AsyncStreams
         public static async Task Main()
         {
             var records = ReadLines("transactions.csv");
-
-            await foreach (var record in records)
+            CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+            
+            await foreach (var record in records.WithCancellation(cts.Token))
             {
                 Console.WriteLine($"Transaction from {record[0]} to {record[1]}");
             }
@@ -33,8 +37,14 @@ namespace AsyncStreams
             #endregion
         }
 
-        public static async IAsyncEnumerable<string[]> ReadLines(string path)
+        public static async IAsyncEnumerable<string[]> ReadLines(string path, [EnumeratorCancellation] CancellationToken token=default)
         {
+            if (token.IsCancellationRequested)
+            {
+                Console.WriteLine("Cancellation requested");
+                yield break; 
+            }
+
             var lines = await System.IO.File.ReadAllLinesAsync(path);
             foreach (var line in lines)
             {
