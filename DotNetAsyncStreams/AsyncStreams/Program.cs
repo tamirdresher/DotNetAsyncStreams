@@ -1,29 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AsyncStreams
 {
     class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
             var records = ReadLines("transactions.csv");
-            
-            var grps = from r in records
-                where r.Length > 0
-                group r by r[0] into g
-                select g;
 
-            foreach (var grp in grps)
+            await foreach (var record in records)
             {
-                Console.WriteLine($"Key: {grp.Key} Count: {grp.Count()}");
+                Console.WriteLine($"Transaction from {record[0]} to {record[1]}");
             }
+
+            #region LINQ
+            //var grps = from r in records
+            //    where r.Length > 0
+            //    group r by r[0] into g
+            //    select g;
+
+            //foreach (var grp in grps)
+            //{
+            //    Console.WriteLine($"Key: {grp.Key} Count: {grp.Count()}");
+            //}
+            #endregion
         }
 
-        public static IEnumerable<string[]> ReadLines(string path)
+        public static async IAsyncEnumerable<string[]> ReadLines(string path)
         {
-            var lines = System.IO.File.ReadAllLines(path);
+            var lines = await System.IO.File.ReadAllLinesAsync(path);
             foreach (var line in lines)
             {
                 yield return line.Split(',');
