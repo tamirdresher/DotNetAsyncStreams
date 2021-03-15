@@ -17,10 +17,14 @@ namespace AsyncStreams
             }
 
             #region LINQ
-            var grps = from r in records
-                       where r.Length > 0
-                       group r by r[0] into g
-                       select g;
+            var grps = records
+                .Where(r => r.Length > 0)
+                .GroupBy(r => r[0])
+                .SelectAwait(async g =>
+                {
+                    await Task.Delay(1);
+                    return g;
+                });
 
             await foreach (var grp in grps)
             {
