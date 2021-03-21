@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,23 +12,21 @@ namespace AsyncStreams
     {
         public static async Task Main()
         {
-            var records = ReadLines("transactions.csv");
-            
-            var grps = records
-                .Where(r => r.Length > 0)
-                .GroupBy(r => r[0])
-                .SelectAwait(async g =>
-                {
-                    await Task.Delay(1);
-                    return g;
-                });
-            var firstGrp = await grps.FirstAsync();
+            var first = AsyncEnumerable.Range(1, 10)
+                .Do(async x => await Task.Delay(1000))
+                .ToObservable();
+            var second = AsyncEnumerable.Range(20, 10)
+                .Do(async x => await Task.Delay(500))
+                .ToObservable();
 
-            await foreach (var transactions in firstGrp.Buffer(2))
+            var combined =
+                first.CombineLatest(second)
+                    .ToAsyncEnumerable();
+
+            await foreach (var x in combined)
             {
-                Console.WriteLine($"T1: {transactions[0][1]} T2: {transactions[1][1]}");
+                Console.WriteLine(x);
             }
-           
         }
 
         public static async IAsyncEnumerable<string[]> ReadLines(string path, [EnumeratorCancellation] CancellationToken token=default)
