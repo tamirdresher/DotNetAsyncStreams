@@ -12,15 +12,7 @@ namespace AsyncStreams
         public static async Task Main()
         {
             var records = ReadLines("transactions.csv");
-            CancellationTokenSource cts = new CancellationTokenSource();
-            cts.Cancel();
             
-            await foreach (var record in records.WithCancellation(cts.Token).ConfigureAwait(false))
-            {
-                Console.WriteLine($"Transaction from {record[0]} to {record[1]}");
-            }
-
-            #region LINQ
             var grps = records
                 .Where(r => r.Length > 0)
                 .GroupBy(r => r[0])
@@ -29,12 +21,13 @@ namespace AsyncStreams
                     await Task.Delay(1);
                     return g;
                 });
+            var firstGrp = await grps.FirstAsync();
 
-            await foreach (var grp in grps)
+            await foreach (var transactions in firstGrp.Buffer(2))
             {
-                Console.WriteLine($"Key: {grp.Key} Count: {await grp.CountAsync()}");
+                Console.WriteLine($"T1: {transactions[0][1]} T2: {transactions[1][1]}");
             }
-            #endregion
+           
         }
 
         public static async IAsyncEnumerable<string[]> ReadLines(string path, [EnumeratorCancellation] CancellationToken token=default)
